@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="输入每种号码的数量，自动帮你算出直接回收、组合回收、豹子回收哪种方案点数最高。">
+  <title>回收点数计算器</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg2: #1e293b;
+      --card: #ffffff;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --amber: #f59e0b;
+      --amber-ink: #92400e;
+      --amber-bg: #fef3c7;
+      --green: #059669;
+      --green-bg: #d1fae5;
+      --blue: #2563eb;
+      --blue-bg: #dbeafe;
+      --red: #dc2626;
+      --red-bg: #fee2e2;
+      --radius: 16px;
+      --shadow: 0 10px 30px rgba(2, 6, 23, .18);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(160deg, #0f172a 0%, #1e3a5f 55%, #0f766e 130%);
+      min-height: 100vh;
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      color: #fff;
+      padding: 48px 20px 30px;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0 0 12px;
+      font-size: clamp(24px, 5vw, 34px);
+      letter-spacing: 1px;
+    }
+    header p {
+      margin: 0 auto;
+      max-width: 620px;
+      color: rgba(255, 255, 255, .82);
+      font-size: 15px;
+      line-height: 1.9;
+    }
+    main {
+      max-width: 920px;
+      margin: 0 auto 60px;
+      padding: 0 20px;
+    }
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px;
+      margin: 24px 0;
+    }
+    .card h2 {
+      margin: 0 0 18px;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card h2 .step {
+      background: var(--blue);
+      color: #fff;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex: none;
+    }
+    .muted { color: var(--muted); }
+    .small { font-size: 13px; line-height: 1.8; }
+
+    /* 规则表 */
+    details.rules { margin-top: 6px; }
+    details.rules summary {
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--muted);
+      user-select: none;
+      outline: none;
+    }
+    .rule-group { margin-top: 22px; }
+    .rule-group h3 {
+      margin: 0 0 12px;
+      font-size: 15px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      text-align: right;
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+    }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: var(--muted); font-weight: 600; }
+    .bonus { color: var(--green); font-weight: 600; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 42px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .b5 { background: #fef3c7; color: #92400e; }
+    .b6 { background: #ffedd5; color: #9a3412; }
+    .b7 { background: #fee2e2; color: #991b1b; }
+    .b8 { background: #fce7f3; color: #9d174d; }
+    .b9 { background: #f3e8ff; color: #6b21a8; }
+    .b10 { background: #e0e7ff; color: #3730a3; }
+    .b11 { background: #d1fae5; color: #065f46; }
+
+    /* 库存输入 */
+    .inventory-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+      gap: 14px;
+    }
+    .inv-card {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px 12px 18px;
+      text-align: center;
+    }
+    .inv-card .name-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .inv-card .face {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .stepper {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      justify-content: center;
+    }
+    .stepper button {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      color: var(--ink);
+      font-size: 19px;
+      font-weight: 700;
+      cursor: pointer;
+      line-height: 1;
+      flex: none;
+      touch-action: manipulation;
+    }
+    .stepper button:hover { background: var(--blue-bg); }
+    .stepper button:active { transform: scale(.95); }
+    .stepper input {
+      width: 64px;
+      height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
+      -moz-appearance: textfield;
+      appearance: textfield;
+      background: #fff;
+    }
+    .stepper input::-webkit-outer-spin-button,
+    .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .inv-card .leopard-note {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .btn {
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      color: var(--ink);
+      border-radius: 12px;
+      padding: 11px 18px;
+      font-size: 14px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .btn:hover { background: #eef2ff; }
+    .btn-primary {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff;
+    }
+    .btn-primary:hover { background: #1d4ed8; }
+    /* 结果 */
+    .result-head {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .metric {
+      flex: 1 1 190px;
+      border-radius: 14px;
+      padding: 18px 16px;
+      text-align: center;
+    }
+    .metric .label { font-size: 13px; opacity: .8; margin-bottom: 8px; }
+    .metric .num {
+      font-size: 27px;
+      font-weight: 800;
+      line-height: 1.2;
+      font-variant-numeric: tabular-nums;
+    }
+    .metric-best { background: var(--green-bg); color: #065f46; }
+    .metric-base { background: #f1f5f9; color: #334155; }
+    .metric-more { background: var(--amber-bg); color: var(--amber-ink); }
+    .plan-steps {
+      margin: 18px 0 6px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .plan-step {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      font-size: 15px;
+    }
+    .plan-step:last-child { border-bottom: 0; }
+    .plan-step .kind {
+      flex: none;
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+    .kind-combo { background: var(--blue-bg); color: var(--blue); }
+    .kind-leopard { background: #fce7f3; color: #be185d; }
+    .kind-direct { background: #f1f5f9; color: #475569; }
+    .plan-step .pts {
+      flex: none;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .alt-table-wrap { overflow-x: auto; }
+    table.alt td:first-child, table.alt th:first-child { text-align: right; }
+    table.alt .rank {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #f1f5f9;
+      color: #475569;
+      font-weight: 700;
+    }
+    .empty-note {
+      padding: 40px 16px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 15px;
+    }
+    .result-note {
+      margin-top: 16px;
+      padding: 14px 18px;
+      background: #f8fafc;
+      border: 1px dashed var(--line);
+      border-radius: 12px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+    .error-note {
+      margin-top: 14px;
+      padding: 14px 18px;
+      background: var(--red-bg);
+      color: var(--red);
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    footer {
+      text-align: center;
+      color: rgba(255, 255, 255, .55);
+      font-size: 13px;
+      padding: 8px 20px 56px;
+    }
+    footer .lic {
+      display: inline-block;
+      margin-bottom: 6px;
+      color: rgba(255, 255, 255, .75);
+    }
+    footer .lic button {
+      background: none;
+      border: 0;
+      color: rgba(255, 255, 255, .55);
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 13px;
+      padding: 0 4px;
+    }
+
+    /* 激活锁屏 */
+    body.locked { overflow: hidden; }
+    #lockScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: linear-gradient(160deg, #0f172a 0%, #1e3a5f 55%, #0f766e 130%);
+      overflow-y: auto;
+    }
+    body.unlocked #lockScreen { display: none; }
+    .lock-card {
+      width: 100%;
+      max-width: 420px;
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 30px 26px 26px;
+      text-align: center;
+    }
+    .lock-card .lock-icon { font-size: 34px; line-height: 1; margin-bottom: 14px; }
+    .lock-card h1 {
+      margin: 0 0 10px;
+      font-size: 22px;
+      color: var(--ink);
+      letter-spacing: 1px;
+    }
+    .lock-card p {
+      margin: 0 0 20px;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+    .lock-card input {
+      width: 100%;
+      height: 52px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      text-align: center;
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      color: var(--ink);
+      background: #f8fafc;
+      text-transform: uppercase;
+    }
+    .lock-card input:focus { outline: 2px solid var(--blue-bg); background: #fff; }
+    .lock-card .lock-btn {
+      width: 100%;
+      height: 50px;
+      margin-top: 14px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--blue);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .lock-card .lock-btn:hover { background: #1d4ed8; }
+    .lock-card .lock-msg {
+      margin-top: 14px;
+      font-size: 14px;
+      line-height: 1.8;
+      min-height: 22px;
+    }
+    .lock-card .lock-msg.err { color: var(--red); font-weight: 600; }
+    .lock-card .lock-msg.warn { color: var(--amber-ink); font-weight: 600; }
+    .lock-card .lock-msg.ok { color: var(--green); font-weight: 600; }
+    .lock-card .lock-hint {
+      margin: 20px 0 0;
+      padding-top: 16px;
+      border-top: 1px dashed var(--line);
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.9;
+    }
+    .lock-card .lock-hint b {
+      color: var(--ink);
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 14px;
+      letter-spacing: .5px;
+    }
+    .lock-card .lock-hint button {
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 3px 9px;
+      margin-left: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+      color: var(--ink);
+      vertical-align: 1px;
+    }
+    .lock-card .lock-hint button:hover { background: #eef2ff; }
+    .lock-card .ip-line {
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.9;
+      word-break: break-all;
+    }
+    .lock-card .ip-line b {
+      color: var(--ink);
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 14px;
+    }
+    .lock-card .ip-line button {
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 4px 10px;
+      margin-left: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+      color: var(--ink);
+    }
+    .lock-card .ip-line button:hover { background: #eef2ff; }
+    @media (max-width: 480px) {
+      .card { padding: 22px 18px; }
+      .metric .num { font-size: 24px; }
+      .plan-step { font-size: 14px; }
+      .plan-step { padding: 12px 14px; }
+      .alt-table-wrap table { font-size: 13px; }
+      .lock-card { padding: 26px 20px 22px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>回收点数计算器</h1>
+    <p>填入手上的号码数量，立刻算出：怎么回收能拿到最多点数。</p>
+  </header>
+
+  <main>
+    <!-- 第一步：填库存 -->
+    <section class="card">
+      <h2><span class="step">1</span>输入你手上每种号码的数量</h2>
+      <div class="inventory-grid" id="inventoryGrid"></div>
+      <div class="btn-row">
+        <button class="btn" type="button" id="btnClear">全部清空</button>
+      </div>
+    </section>
+
+    <!-- 第二步：结果 -->
+    <section class="card" id="resultCard">
+      <h2><span class="step">2</span>最优回收方案</h2>
+      <div id="resultBox"><div class="empty-note">请先在上方输入数量，结果会自动计算。</div></div>
+    </section>
+
+    <!-- 规则说明 -->
+    <section class="card">
+      <h2><span class="step">?</span>规则说明</h2>
+      <details class="rules" open>
+        <summary>点击收起 / 展开规则（如果数据有更新，直接改这里或告诉我）</summary>
+
+        <div class="rule-group">
+          <h3>单个号码直接回收</h3>
+          <table>
+            <thead><tr><th>号码</th><th>单个回收</th></tr></thead>
+            <tbody id="ruleDirectBody"></tbody>
+          </table>
+        </div>
+
+        <div class="rule-group">
+          <h3>组合回收（每套组合里每种号码各用 1 个）</h3>
+          <table>
+            <thead><tr><th>组合</th><th>需要</th><th>回收点数</th><th>比单收多</th></tr></thead>
+            <tbody id="ruleComboBody"></tbody>
+          </table>
+        </div>
+
+        <div class="rule-group">
+          <h3>豹子回收（同一号码凑够一组的数量）</h3>
+          <table>
+            <thead><tr><th>号码</th><th>一组数量</th><th>回收点数</th><th>比单收多</th></tr></thead>
+            <tbody id="ruleLeopardBody"></tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+
+    <div class="result-note">
+      计算说明：先把所有号码按单收价值算一遍得到基线；随后程序穷举“组合回收”的各种可行组合数量，
+      剩余数量优先凑“豹子回收”，最后剩余的散号按直接回收计，从中挑出总点数最高的方案。
+      同一种回收不限次数，只要手上数量够，可以一直重复做。
+    </div>
+  </main>
+
+  <footer>
+    <div>回收点数计算器 · 纯网页运行，数据只留在你自己的设备上</div>
+  </footer>
+
+  <script src="solver.js"></script>
+  <script>
+    'use strict';
+
+    // ---------- 工具 ----------
+    function fmt(n) {
+      return n.toLocaleString('zh-CN');
+    }
+
+    function typeBadge(type) {
+      return '<span class="badge b' + type.id + '">' + type.name + '</span>';
+    }
+
+    function esc(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // ---------- 渲染规则表 ----------
+    function renderRules() {
+      document.getElementById('ruleDirectBody').innerHTML = TYPES.map(function (t) {
+        return '<tr><td>' + typeBadge(t) + '</td><td>' + fmt(t.value) + ' 点</td></tr>';
+      }).join('');
+
+      document.getElementById('ruleComboBody').innerHTML = COMBOS.map(function (c) {
+        const needHtml = c.need.map((id) => typeById(id).name).join(' + ');
+        return '<tr><td>' + c.name + '</td><td class="muted">' + needHtml +
+          '</td><td>' + fmt(c.points) + ' 点</td>' +
+          '<td class="bonus">+' + fmt(comboBonus(c)) + '</td></tr>';
+      }).join('');
+
+      document.getElementById('ruleLeopardBody').innerHTML = TYPES.map(function (t) {
+        return '<tr><td>' + typeBadge(t) + '</td><td>' + t.leopardCount + ' 个</td>' +
+          '<td>' + fmt(t.leopardPoints) + ' 点</td>' +
+          '<td class="bonus">+' + fmt(leopardBonus(t)) + '</td></tr>';
+      }).join('');
+    }
+
+    function renderInventory() {
+      const grid = document.getElementById('inventoryGrid');
+      grid.innerHTML = '';
+      for (const t of TYPES) {
+        const card = document.createElement('div');
+        card.className = 'inv-card';
+
+        const nameRow = document.createElement('div');
+        nameRow.className = 'name-row';
+        nameRow.innerHTML = typeBadge(t) +
+          '<span class="face">单个 ' + fmt(t.value) + ' 点</span>';
+
+        const stepper = document.createElement('div');
+        stepper.className = 'stepper';
+
+        const minus = document.createElement('button');
+        minus.type = 'button';
+        minus.textContent = '−';
+        minus.setAttribute('aria-label', '减少' + t.name);
+
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.min = '0';
+        input.step = '1';
+        input.value = '0';
+        input.setAttribute('aria-label', t.name + '的数量');
+        input.dataset.typeId = t.id;
+
+        const plus = document.createElement('button');
+        plus.type = 'button';
+        plus.textContent = '+';
+        plus.setAttribute('aria-label', '增加' + t.name);
+
+        const note = document.createElement('div');
+        note.className = 'leopard-note';
+        note.textContent = '豹子：凑' + t.leopardCount + '个=' + fmt(t.leopardPoints) + '点';
+
+        minus.addEventListener('click', function () {
+          input.value = Math.max(0, (parseInt(input.value, 10) || 0) - 1);
+          scheduleRender();
+        });
+        plus.addEventListener('click', function () {
+          input.value = (parseInt(input.value, 10) || 0) + 1;
+          scheduleRender();
+        });
+        input.addEventListener('input', scheduleRender);
+
+        stepper.appendChild(minus);
+        stepper.appendChild(input);
+        stepper.appendChild(plus);
+        card.appendChild(nameRow);
+        card.appendChild(stepper);
+        card.appendChild(note);
+        grid.appendChild(card);
+      }
+    }
+
+    function readCounts() {
+      const counts = {};
+      for (const t of TYPES) {
+        const el = document.querySelector('input[data-type-id="' + t.id + '"]');
+        counts[t.id] = el ? el.value : 0;
+      }
+      return counts;
+    }
+
+    function setCounts(counts) {
+      for (const t of TYPES) {
+        const el = document.querySelector('input[data-type-id="' + t.id + '"]');
+        if (el) el.value = counts[t.id] == null ? 0 : counts[t.id];
+      }
+      scheduleRender();
+    }
+
+    document.getElementById('btnClear').addEventListener('click', function () {
+      setCounts({});
+    });
+
+    // ---------- 结果显示 ----------
+    function stepKindClass(step) {
+      if (step.indexOf('组合') === 0) return 'kind-combo';
+      if (step.indexOf('豹子') >= 0 || step.indexOf('(凑') >= 0) return 'kind-leopard';
+      return 'kind-direct';
+    }
+
+    function stepKindText(step) {
+      if (step.indexOf('组合') === 0) return '组合回收';
+      if (step.indexOf('豹子') >= 0 || step.indexOf('(凑') >= 0) return '豹子回收';
+      return '直接回收';
+    }
+
+    function planLineHtml(line) {
+      return '<div class="plan-step">' +
+        '<span><span class="kind ' + stepKindClass(line.text) + '">' + stepKindText(line.text) +
+        '</span> <span>' + esc(line.text) + '</span></span>' +
+        '<span class="pts">' + fmt(line.points) + ' 点</span></div>';
+    }
+
+    function planSummary(plan) {
+      const parts = [];
+      for (const item of plan.comboItems) parts.push(item.combo.name + '×' + item.count);
+      for (const item of plan.leopardItems) parts.push(item.type.name + '豹子×' + item.count);
+      if (parts.length === 0) parts.push('只用直接回收');
+      return parts.join('、');
+    }
+
+    function renderResult() {
+      const box = document.getElementById('resultBox');
+      let result;
+      try {
+        result = solve(readCounts());
+      } catch (err) {
+        box.innerHTML = '<div class="error-note">' + esc(err.message) + '</div>';
+        return;
+      }
+
+      const hasAny = Object.keys(result.counts).some(function (id) {
+        return (result.counts[id] || 0) > 0;
+      });
+      if (!hasAny) {
+        box.innerHTML = '<div class="empty-note">请先在上方输入你手上每种号码的数量，结果会自动计算。</div>';
+        return;
+      }
+
+      const plan = result.plan;
+      const stepsHtml = plan.lines.map(planLineHtml).join('');
+
+      let altHtml = '';
+      if (result.alternatives.length > 0) {
+        altHtml = '<h3 style="margin:26px 0 12px;font-size:15px;">次优的几种方案（可选参考）</h3>' +
+          '<div class="alt-table-wrap"><table class="alt">' +
+          '<thead><tr><th>#</th><th>方式</th><th style="text-align:right">总点数</th><th style="text-align:right">比最优少</th></tr></thead><tbody>';
+        result.alternatives.forEach(function (alt, i) {
+          altHtml += '<tr><td><span class="rank">' + (i + 2) + '</span></td>' +
+            '<td class="muted">' + esc(planSummary(alt)) + '</td>' +
+            '<td style="font-weight:700">' + fmt(alt.points) + '</td>' +
+            '<td class="muted">-' + fmt(plan.points - alt.points) + '</td></tr>';
+        });
+        altHtml += '</tbody></table></div>';
+      }
+
+      box.innerHTML =
+        '<div class="result-head">' +
+        '  <div class="metric metric-best"><div class="label">最优方案总点数</div>' +
+        '    <div class="num">' + fmt(plan.points) + '</div></div>' +
+        '  <div class="metric metric-base"><div class="label">全部直接回收</div>' +
+        '    <div class="num">' + fmt(result.basePoints) + '</div></div>' +
+        '  <div class="metric metric-more"><div class="label">比全部直接回收多拿</div>' +
+        '    <div class="num">+' + fmt(plan.bonus) + '</div></div>' +
+        '</div>' +
+        '<div class="small muted" style="margin-bottom:10px">已比较 ' + fmt(result.checked) +
+        ' 种组合数量搭配，以下为最优做法：</div>' +
+        '<div class="plan-steps">' + stepsHtml + '</div>' +
+        '<div class="result-note">' +
+        '  合计 ' + fmt(plan.points) + ' 点 = 全部直接回收 ' + fmt(result.basePoints) +
+        ' 点 + 多拿 ' + fmt(plan.bonus) + ' 点。方案不会用超过你填的数量。' +
+        '</div>' +
+        altHtml;
+    }
+
+    let renderTimer = null;
+    function scheduleRender() {
+      if (renderTimer) clearTimeout(renderTimer);
+      renderTimer = setTimeout(function () {
+        renderTimer = null;
+        renderResult();
+      }, 120);
+    }
+
+    // ---------- 初始化 ----------
+    renderRules();
+    renderInventory();
+  </script>
+</body>
+</html>
