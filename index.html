@@ -97,6 +97,18 @@
         filter: none;
       }
     }
+    /* 副标题：普通文字，不做彩色 */
+    header .slogan-sub {
+      display: block;
+      margin: 0 auto 12px;
+      max-width: none;
+      color: #e9eefc;
+      font-size: clamp(15px, 3.4vw, 19px);
+      font-weight: 700;
+      letter-spacing: 2px;
+      line-height: 1.6;
+      text-shadow: 0 1px 6px rgba(2, 6, 23, .55);
+    }
     main {
       max-width: 920px;
       margin: 0 auto 60px;
@@ -518,6 +530,7 @@
   <header>
     <h1>回收点数计算器</h1>
     <p class="slogan">时运传说独家</p>
+    <p class="slogan-sub">官频26416小泽出品</p>
     <p>填入手上的号码数量，立刻算出：怎么回收能拿到最多点数。</p>
   </header>
 
