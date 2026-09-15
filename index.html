@@ -52,6 +52,56 @@
       font-size: 15px;
       line-height: 1.9;
     }
+    /* 招牌字样：五彩流光 + 发光，比正文更抢眼 */
+    header .slogan {
+      display: inline-block;
+      margin: 0 auto 10px;
+      max-width: none;
+      font-size: clamp(24px, 5.4vw, 34px);
+      font-weight: 900;
+      letter-spacing: 5px;
+      line-height: 1.35;
+      background-image: linear-gradient(92deg,
+        #ff2d55 0%, #ff9500 14%, #ffe600 28%, #37e07a 42%,
+        #22d3ee 56%, #6d7cff 70%, #ff4fd8 84%, #ff2d55 100%);
+      background-size: 150% 100%;
+      background-position: 0% 50%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 5px rgba(255, 255, 255, .55))
+              drop-shadow(0 0 14px rgba(56, 189, 248, .7));
+      animation: slogan-flow 2.6s linear infinite, slogan-glow 1.5s ease-in-out infinite alternate;
+    }
+    @keyframes slogan-flow {
+      from { background-position: 0% 50%; }
+      to { background-position: 100% 50%; }
+    }
+    @keyframes slogan-glow {
+      from {
+        filter: drop-shadow(0 0 4px rgba(255, 255, 255, .45))
+                drop-shadow(0 0 10px rgba(56, 189, 248, .55));
+        transform: scale(1);
+      }
+      to {
+        filter: drop-shadow(0 0 9px rgba(255, 255, 255, .95))
+                drop-shadow(0 0 22px rgba(255, 79, 216, .85));
+        transform: scale(1.035);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      header .slogan { animation: none; background-position: 30% 50%; }
+    }
+    /* 万一浏览器不支持把渐变裁进文字，就退回金色纯文字，避免看不见 */
+    @supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+      header .slogan {
+        color: #ffd45e;
+        -webkit-text-fill-color: #ffd45e;
+        background-image: none;
+        filter: none;
+      }
+    }
     main {
       max-width: 920px;
       margin: 0 auto 60px;
@@ -472,6 +522,7 @@
 
   <header>
     <h1>回收点数计算器</h1>
+    <p class="slogan">时运传说独家</p>
     <p>填入手上的号码数量，立刻算出：怎么回收能拿到最多点数。</p>
   </header>
 
