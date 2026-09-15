@@ -82,16 +82,11 @@
       from {
         filter: drop-shadow(0 0 4px rgba(255, 255, 255, .45))
                 drop-shadow(0 0 10px rgba(56, 189, 248, .55));
-        transform: scale(1);
       }
       to {
         filter: drop-shadow(0 0 9px rgba(255, 255, 255, .95))
                 drop-shadow(0 0 22px rgba(255, 79, 216, .85));
-        transform: scale(1.035);
       }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      header .slogan { animation: none; background-position: 30% 50%; }
     }
     /* 万一浏览器不支持把渐变裁进文字，就退回金色纯文字，避免看不见 */
     @supports not ((-webkit-background-clip: text) or (background-clip: text)) {
