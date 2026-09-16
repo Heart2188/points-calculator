@@ -25,9 +25,9 @@ const TYPES = [
   { id: 6,  name: '六号',   value: 300,  leopardCount: 9,  leopardPoints: 2900 },
   { id: 7,  name: '五号',   value: 400,  leopardCount: 8,  leopardPoints: 3500 },
   { id: 8,  name: '四号',   value: 500,  leopardCount: 7,  leopardPoints: 3900 },
-  { id: 9,  name: '敖丙',   value: 600,  leopardCount: 6,  leopardPoints: 4100 },
-  { id: 10, name: '哪吒',   value: 800,  leopardCount: 5,  leopardPoints: 4600 },
-  { id: 11, name: '魔灵送财', value: 1500, leopardCount: 4, leopardPoints: 7200 },
+  { id: 9,  name: '敖丙',   value: 600,  leopardCount: 6,  leopardPoints: 4200 },
+  { id: 10, name: '哪吒',   value: 800,  leopardCount: 5,  leopardPoints: 4800 },
+  { id: 11, name: '魔灵送财', value: 1500, leopardCount: 4, leopardPoints: 7000 },
 ];
 
 const TYPE_INDEX = {};
